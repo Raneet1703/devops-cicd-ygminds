@@ -20,10 +20,7 @@ pipeline {
         stage('Push image to Hub'){
             steps{
                 script{
-                   withCredentials([string(credentialsId: 'dockerhub-pwd', variable: 'dockerhubpwd')]) {
-                   sh 'docker login -u ankitjagtap -p ${dockerhubpwd}'
-
-}
+                   sh 'docker login -u jeet17 -p Jeet@170397'
                    sh 'docker push ankitjagtap/devops-integration'
                 }
             }
