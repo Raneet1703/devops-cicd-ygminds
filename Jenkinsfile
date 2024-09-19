@@ -1,3 +1,6 @@
+# vim /etc/sudoers
+# jenkins ALL=(ALL) NOPASSWD: ALL
+
 pipeline {
     agent any
     tools{
@@ -6,36 +9,32 @@ pipeline {
     stages{
         stage('Build Maven'){
             steps{
-                git 'https://github.com/ankit-jagtap-devops/devops-cicd-ygminds.git'
+                checkout([$class: 'GitSCM', branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/ygminds73/devops-cicd.git']]])
                 sh 'mvn clean install'
             }
         }
         stage('Build docker image'){
             steps{
                 script{
-                    sh 'docker buildx build -t ankitjagtap/devops-integration .'
+                    sh 'docker build -t youngminds73/devops-integration .'
                 }
             }
         }
         stage('Push image to Hub'){
             steps{
                 script{
-                   sh 'docker login -u jeet17 -p Jeet@170397'
-                   sh 'docker push ankitjagtap/devops-integration'
-                }
-            }
-        }
-        stage('EKS and Kubectl configuration'){
-            steps{
-                script{
-                    sh 'aws eks update-kubeconfig --region ap-south-1 --name ankit-cluster'
+                   withCredentials([string(credentialsId: 'dockerhub-pwd', variable: 'dockerhubpwd')]) {
+                   sh 'docker login -u youngminds73 -p ${dockerhubpwd}'
+
+}
+                   sh 'docker push youngminds73/devops-integration'
                 }
             }
         }
         stage('Deploy to k8s'){
             steps{
                 script{
-                    sh 'kubectl apply -f deploymentservice.yaml'
+                    kubernetesDeploy (configs: 'deploymentservice.yaml',kubeconfigId: 'k8sconfigpwd')
                 }
             }
         }
